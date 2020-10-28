@@ -18,6 +18,16 @@ All of the code in this repo was written hastily without thought for reading the
 - Copys argv[1].strings.js to argv[1].cracked.js
 - Runs terser to uglify the script
 
+## Miscellaneous scripts
+
+### unchunk.js
+
+- Converts BinaryExpressions (e.g. string concatenation) into Literals (defeats javascript-obfuscator's [splitStrings](https://github.com/javascript-obfuscator/javascript-obfuscator#splitstrings) option)
+- Requires packages from npm:
+  - [acorn](https://yarn.pm/acorn): for parsing the AST of the script
+  - [acorn-walk](https://yarn.pm/acorn-walk): walk through the AST
+  - [escodegen](https://yarn.pm/escodegen): generate a valid script from the modified ast
+
 ## Decoding scripts
 
 ### decoder.js
