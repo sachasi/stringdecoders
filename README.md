@@ -23,6 +23,7 @@ All of the code in this repo was written hastily without thought for reading the
 ### unchunk.js
 
 - Converts BinaryExpressions (e.g. string concatenation) into Literals (defeats javascript-obfuscator's [splitStrings](https://github.com/javascript-obfuscator/javascript-obfuscator#splitstrings) option)
+- Simplifies mathematical expressions (defeats javascript-obfuscator's [numbersToExpressions](https://github.com/javascript-obfuscator/javascript-obfuscator#numberstoexpressions) option)
 - Requires packages from npm:
   - [acorn](https://yarn.pm/acorn): for parsing the AST of the script
   - [acorn-walk](https://yarn.pm/acorn-walk): walk through the AST

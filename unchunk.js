@@ -3,15 +3,37 @@ const escodegen = require('escodegen'),
   walk = require('acorn-walk'),
   fs = require('fs')
 
-const src = fs.readFileSync('./bs.strings.js', 'utf8')
+const src = fs.readFileSync('./faa.cleaned.js', 'utf8')
 
 const ast = acorn.parse(src, { ecmaVersion: '2015' })
 
-// walks through each BinaryExpression and converts to Literals if both sides are literals of type Strings
+function math(left, operator, right) {
+  switch (operator) {
+    case '+':
+      return left + right
+    case '*':
+      return left * right
+    case '-':
+      return left - right
+    case '/':
+      return left / right
+  }
+  return left
+}
+
+function unaryExpressionToNumber(node) {
+  let num = node.argument.value
+  if (node.operator === '-') num = num * -1
+  return num
+}
+
+// walks through each BinaryExpression and combines them
 function parse() {
   let matched = false
+
   walk.simple(ast, {
     BinaryExpression(node) {
+      // string concatenation
       if (
         node.left.type === 'Literal' &&
         node.right.type === 'Literal' &&
@@ -25,6 +47,45 @@ function parse() {
           'Combined BinaryExpression ->',
           node.left.value,
           '+',
+          node.right.value
+        )
+      }
+
+      // Converts UnaryExpressions to numeric literals
+      if (
+        node.left.type === 'UnaryExpression' &&
+        typeof node.left.argument.value === 'number'
+      ) {
+        node.left.type = 'Literal'
+        node.left.value = unaryExpressionToNumber(node.left)
+        delete node.left.operator
+        delete node.left.prefix
+      }
+      if (
+        node.right.type === 'UnaryExpression' &&
+        typeof node.right.argument.value === 'number'
+      ) {
+        node.right.type = 'Literal'
+        node.right.value = unaryExpressionToNumber(node.right)
+        delete node.right.operator
+        delete node.right.prefix
+      }
+
+      // Combines numeric Literals
+      if (
+        node.left.type === 'Literal' &&
+        node.right.type === 'Literal' &&
+        typeof node.left.value === 'number' &&
+        typeof node.right.value === 'number'
+      ) {
+        let val = math(node.left.value, node.operator, node.right.value)
+        matched = true
+        node.type = 'Literal'
+        node.value = val
+        console.log(
+          'Combined BinaryExpression ->',
+          node.left.value,
+          node.operator,
           node.right.value
         )
       }
@@ -42,6 +103,21 @@ while (res) {
   console.log('Pass', pass, 'complete')
 }
 
+// Converts negative numeric Literals to UnaryExpressions
+walk.simple(ast, {
+  Literal(node) {
+    if (typeof node.value === 'number' && node.value < 0) {
+      node.type = 'UnaryExpression'
+      node.operator = '-'
+      node.prefix = true
+      node.argument = {
+        type: 'Literal',
+        value: Math.abs(node.value),
+      }
+    }
+  },
+})
+
 console.log('Finished parsing file')
 
-fs.writeFileSync('./bs.unchunked.js', escodegen.generate(ast), 'utf8')
+fs.writeFileSync('./faa.unchunked.js', escodegen.generate(ast), 'utf8')
